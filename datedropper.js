@@ -1284,6 +1284,14 @@
 				format = /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;
 			return format.test(value);
 		},
+		is_text_input = function () {
+            if (picker && pickers[picker.id].text_input) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
 
 		// REST FUNCTIONS
 
@@ -1970,8 +1978,7 @@
 				.attr('data-id',id)
 				.addClass('picker-input')
 				.prop({
-					'type':'text',
-					'readonly' : true
+					'type':'text'
 				});
 
 				var
@@ -1989,6 +1996,7 @@
 					picker_jump = (input.data('jump')&&is_int(input.data('jump'))) ? input.data('jump') : 10,
 					picker_max_year = (input.data('max-year')&&is_int(input.data('max-year'))) ? input.data('max-year') : new Date().getFullYear(),
 					picker_min_year = (input.data('min-year')&&is_int(input.data('min-year'))) ? input.data('min-year') : 1970,
+                    picker_text_input = (input.data('text-input') === true) ? input.data('text-input') : false,
 
 					picker_modal = (input.data('modal')===true) ? 'picker-modal' : '',
 					picker_theme = input.data('theme') || 'primary',
@@ -2009,7 +2017,8 @@
 					lang : picker_lang,
 					large : picker_large,
 					lock : picker_lock,
-					jump : picker_jump,
+                    jump: picker_jump,
+                    text_input: picker_text_input,
 					key : {
 						m : {
 							min : 1,
@@ -2155,9 +2164,8 @@
 		})
 		.focus(function(e){
 
-			e.preventDefault();
-			$(this).blur();
-
+            e.preventDefault();
+                                    
 			if(picker)
 				picker_hide();
 
@@ -2167,6 +2175,9 @@
 				element : $('#'+$(this).data('id'))
 			};
 
+            if (!is_text_input())
+                $(this).blur();
+                        
 			is_fx_mobile();
 			picker_offset();
 			picker_set();
@@ -2175,6 +2186,36 @@
 			if(picker.element.hasClass('picker-modal'))
 				$('body').append('<div class="picker-modal-overlay"></div>')
 
-		});
+        })
+        .keyup(function (data) {
+
+            var value = data.target.value;
+
+            if (is_date(value)) {
+
+                if (Date.parse(value)) {
+
+                    var date = new Date(value);
+                    
+                    var d = date.getDate();
+                    var m = date.getMonth()+1;
+                    var y = date.getFullYear();
+
+                    picker_values_increase('d', d);
+                    picker_values_increase('m', m);
+                    picker_values_increase('y', y);
+
+                    picker_ul_transition('d', d);
+                    picker_ul_transition('m', m);
+                    picker_ul_transition('y', y);
+
+                    input_change_value();
+
+                    picker_set();
+                }
+            }
+
+        });
+
 	};
 }(jQuery));
